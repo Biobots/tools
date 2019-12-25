@@ -27,12 +27,13 @@ class Torrent(object):
 		self.detailurl = detailurl
 
 	def getDetail(self):
-		res = requests.get(url=config['url']+"/"+self.detailurl, cookies=config['cookies'])
+		res = requests.get(url=config['url']+"/"+self.detailurl, cookies=config['cookies'], headers=config['headers'])
 		return res
 	
-	def getTorrent(self):
-		res = requests.get(url=config['url']+"/download.php?id="+self.id, cookies=config['cookies'])
-		return res
+	def downloadTorrent(self, path):
+		res = requests.get(url=config['url']+"/download.php?id="+self.id, cookies=config['cookies'], headers=config['headers'])
+		open(path+re.search(r'filename="(.*?)"',res.headers['content-disposition']).group(1),'wb').write(res.content)
+		del res
 
 class Promo(object):
 	def __init__(self, upload, download):
