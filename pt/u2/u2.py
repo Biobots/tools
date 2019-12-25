@@ -3,13 +3,17 @@ import requests
 import bs4
 import configparser
 import classes
-import utils
+from utils import *
 
-config = utils.readConfig("config.ini")
 ret = requests.get(url=config['url']+"/torrents.php", cookies=config['cookies'])
-rst = utils.searchTorrents(ret.text)
+rst = searchTorrents(ret.text)
+torrent = []
 for i in rst:
-	url, id = utils.getDetail(i)
+	url, id = getDetail(i)
 	print(config['url']+'/'+url+'\n'+id)
-	promo = utils.getPromo(i)
+	promo = getPromo(i)
 	print(str(promo.upload)+" "+str(promo.download))
+	torrent.append(Torrent(getTitle(i), id, promo, url))
+f = torrent[0].getTorrent()
+open("./"+torrent[0].id+".torrent",'wb').write(f.content)
+del f

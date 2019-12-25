@@ -1,47 +1,6 @@
 import re
 import requests
-import bs4
 import configparser
-import classes
-
-def calpromo(taglist):
-	if len(taglist) == 0:
-		return classes.Promo(1, 1)
-	else:
-		tag = taglist[0]
-		text = tag['class'][0]
-		if text == 'pro_free':
-			return classes.Promo(1, 0)
-		elif text == 'pro_free2up':
-			return classes.Promo(2, 0)
-		elif text == 'pro_2up':
-			return classes.Promo(2, 1)
-		elif text == 'pro_50pctdown':
-			return classes.Promo(1, 0.5)
-		elif text == 'pro_30pctdown':
-			return classes.Promo(1, 0.3)
-		elif text == 'pro_50pctdown2up':
-			return classes.Promo(2, 0.5)
-		elif text == 'pro_custom':
-			if len(taglist) >= 3:
-				up = re.sub(r'X', "", taglist[1].next_sibling.text)
-				down = re.sub(r'X', "", taglist[2].next_sibling.text)
-				return classes.Promo(up, down)
-			else:
-				return classes.Promo(1, 1)
-		else:
-			return classes.Promo(1, 1)
-
-class Torrent(object):
-	def __init__(self, title, id, promo):
-		self.title = title
-		self.id = id
-		self.promo = promo
-
-class Promo(object):
-	def __init__(self, upload, download):
-		self.upload = upload
-		self.download = download
 
 def readConfig(path):
 	conf = configparser.ConfigParser()
@@ -58,12 +17,34 @@ def readConfig(path):
 	}
 	return config
 
+config = readConfig("config.ini")
+
+class Torrent(object):
+	def __init__(self, title, id, promo, detailurl):
+		self.title = title
+		self.id = id
+		self.promo = promo
+		self.detailurl = detailurl
+
+	def getDetail(self):
+		res = requests.get(url=config['url']+"/"+self.detailurl, cookies=config['cookies'])
+		return res
+	
+	def getTorrent(self):
+		res = requests.get(url=config['url']+"/download.php?id="+self.id, cookies=config['cookies'])
+		return res
+
+class Promo(object):
+	def __init__(self, upload, download):
+		self.upload = upload
+		self.download = download
+
 def searchTorrents(restext):
 	pattern = re.compile(r'<table class="torrentname"(?:.*?)>\n(.*?)</table>')
 	rst = pattern.findall(restext)
 	return rst
 
-def getName(torrent):
+def getTitle(torrent):
 	pattern = re.compile(r'<a class="tooltip"(?:.*?)>(.*?)</a>')
 	rst = re.search(pattern, torrent).group(1)
 	return rst
@@ -91,7 +72,7 @@ def getPromo(torrent):
 	elif pro == '30pctdown':
 		return Promo(1, 0.3)
 	elif pro == '50pctdown2up':
-		return classes.Promo(2, 0.5)
+		return Promo(2, 0.5)
 	elif pro == 'custom':
 		pattern = re.compile(r'<img class="arrow(?:up|down)"(?:.*?)><b>(.*?)X')
 		rst = pattern.findall(torrent)
