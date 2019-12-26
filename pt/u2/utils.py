@@ -20,11 +20,16 @@ def readConfig(path):
 config = readConfig("config.ini")
 
 class Torrent(object):
-	def __init__(self, title, id, promo, detailurl):
+	def __init__(self, title, id, promo, detailurl, size):
 		self.title = title
 		self.id = id
 		self.promo = promo
 		self.detailurl = detailurl
+		self.size = size
+
+	def setDetailInfo(self):
+		res = self.getDetail()
+		return res
 
 	def getDetail(self):
 		res = requests.get(url=config['url']+"/"+self.detailurl, cookies=config['cookies'], headers=config['headers'])
@@ -40,8 +45,13 @@ class Promo(object):
 		self.upload = upload
 		self.download = download
 
+class Page(object):
+	def __init__(self, index):
+		self.index
+
 def searchTorrents(restext):
-	pattern = re.compile(r'<table class="torrentname"(?:.*?)>\n(.*?)</table>')
+	#pattern = re.compile(r'<table class="torrentname"(?:.*?)>\n(.*?)</table>')
+	pattern = re.compile(r'<tr>\n<td class="rowfollow nowrap" valign="middle">([\d\D]*?</b></a>)</td></tr>')
 	rst = pattern.findall(restext)
 	return rst
 
@@ -55,6 +65,11 @@ def getDetail(torrent):
 	pattern = re.compile(r'<a class="tooltip" href="(details.php\?id=(\d*?)&amp;hit=1)"(?:.*?)>')
 	rst = re.search(pattern, torrent)
 	return rst.group(1), rst.group(2)
+
+def getSize(torrent):
+	pattern = re.compile(r'<td class="rowfollow">([\.\d]+)<br />(GiB|MiB)</td>')
+	rst = re.search(pattern, torrent)
+	return rst.group(1)+' '+rst.group(2)
 
 def getPromo(torrent):
 	pattern = re.compile(r'<img class="pro_(.*?)"')
