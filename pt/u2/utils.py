@@ -27,13 +27,9 @@ class Torrent(object):
 		self.detailurl = detailurl
 		self.size = size
 
-	def setDetailInfo(self):
-		res = self.getDetail()
-		return res
-
 	def getDetail(self):
 		res = requests.get(url=config['url']+"/"+self.detailurl, cookies=config['cookies'], headers=config['headers'])
-		return res
+		return res.text
 	
 	def downloadTorrent(self, path):
 		res = requests.get(url=config['url']+"/download.php?id="+self.id, cookies=config['cookies'], headers=config['headers'])
@@ -70,6 +66,11 @@ def getSize(torrent):
 	pattern = re.compile(r'<td class="rowfollow">([\.\d]+)<br />(GiB|MiB)</td>')
 	rst = re.search(pattern, torrent)
 	return rst.group(1)+' '+rst.group(2)
+
+def getSL(detail):
+	pattern = re.compile(r'<div id="peercount"><b>(\d+)个做种者</b> \| <b>(\d+)个下载者</b>')
+	rst = re.search(pattern, detail)
+	return rst.group(1), rst.group(2)
 
 def getPromo(torrent):
 	pattern = re.compile(r'<img class="pro_(.*?)"')
