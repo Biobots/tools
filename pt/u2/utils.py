@@ -9,7 +9,8 @@ def readConfig(path):
 		'url': conf.get('u2', 'url'),
 		'cookies': {
 			'c_locale': conf.get('u2', 'c_locale'),
-			'nexusphp_u2': conf.get('u2', 'nexusphp_u2')
+			'nexusphp_u2': conf.get('u2', 'nexusphp_u2'),
+			'__cfduid' : conf.get('u2', '__cfduid')
 		},
 		'headers': {
 			'User-Agent': conf.get('u2', 'User-Agent')
@@ -33,8 +34,10 @@ class Torrent(object):
 	
 	def downloadTorrent(self, path):
 		res = requests.get(url=config['url']+"/download.php?id="+self.id, cookies=config['cookies'], headers=config['headers'])
-		open(path+re.search(r'filename="(.*?)"',res.headers['content-disposition']).group(1),'wb').write(res.content)
+		filename = re.search(r'filename="(.*?)"',res.headers['content-disposition']).group(1)
+		open(path+filename,'wb').write(res.content)
 		del res
+		return filename
 
 class Promo(object):
 	def __init__(self, upload, download):
